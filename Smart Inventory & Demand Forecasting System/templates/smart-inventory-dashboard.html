@@ -1,0 +1,1236 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Smart Inventory Dashboard</title>
+    
+    <!-- Google Fonts & Chart.js -->
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+    <style>
+        /* CSS Custom Variables for Theme Control */
+        :root {
+            /* Dark Theme Variables (Default) */
+            --bg-primary: #090d16;
+            --bg-secondary: #0f172a;
+            --sidebar-bg: #0b0f19;
+            --card-bg: rgba(22, 28, 45, 0.4);
+            --card-border: rgba(255, 255, 255, 0.06);
+            --text-primary: #f8fafc;
+            --text-secondary: #94a3b8;
+            --accent-primary: #6366f1;
+            --accent-secondary: #818cf8;
+            --accent-glow: rgba(99, 102, 241, 0.15);
+            --success: #10b981;
+            --warning: #f59e0b;
+            --danger: #ef4444;
+            --header-border: rgba(255, 255, 255, 0.05);
+            --hover-row: rgba(255, 255, 255, 0.02);
+            --search-bg: rgba(15, 23, 42, 0.8);
+            --input-border: rgba(255, 255, 255, 0.08);
+            --shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.5);
+        }
+
+        :root.light-theme {
+            /* Light Theme Variables */
+            --bg-primary: #f8fafc;
+            --bg-secondary: #ffffff;
+            --sidebar-bg: #ffffff;
+            --card-bg: #ffffff;
+            --card-border: #e2e8f0;
+            --text-primary: #0f172a;
+            --text-secondary: #64748b;
+            --accent-primary: #4f46e5;
+            --accent-secondary: #6366f1;
+            --accent-glow: rgba(79, 70, 229, 0.1);
+            --success: #10b981;
+            --warning: #d97706;
+            --danger: #dc2626;
+            --header-border: #e2e8f0;
+            --hover-row: #f1f5f9;
+            --search-bg: #f1f5f9;
+            --input-border: #cbd5e1;
+            --shadow: 0 4px 20px 0 rgba(148, 163, 184, 0.12);
+        }
+
+        /* Base Reset */
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: 'Plus Jakarta Sans', sans-serif;
+            transition: background-color 0.25s ease, border-color 0.25s ease, color 0.2s ease;
+        }
+
+        body {
+            background-color: var(--bg-primary);
+            color: var(--text-primary);
+            min-height: 100vh;
+            display: flex;
+            overflow-x: hidden;
+        }
+
+        /* Left Sidebar Styling */
+        .sidebar {
+            width: 260px;
+            background-color: var(--sidebar-bg);
+            border-right: 1px solid var(--header-border);
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            padding: 2rem 1.5rem;
+            position: fixed;
+            top: 0;
+            bottom: 0;
+            left: 0;
+            z-index: 100;
+        }
+
+        .logo-section {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            margin-bottom: 3rem;
+        }
+
+        .logo-icon {
+            background: linear-gradient(135deg, var(--accent-primary) 0%, var(--accent-secondary) 100%);
+            width: 38px;
+            height: 38px;
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 800;
+            color: #fff;
+            font-size: 1.2rem;
+            box-shadow: 0 4px 12px rgba(99, 102, 241, 0.3);
+        }
+
+        .logo-text {
+            font-size: 1.15rem;
+            font-weight: 800;
+            letter-spacing: -0.5px;
+            background: linear-gradient(135deg, var(--text-primary) 30%, var(--text-secondary) 100%);
+            -webkit-background-clip: text;
+            background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .nav-menu {
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+            flex-grow: 1;
+        }
+
+        .nav-item {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            padding: 0.85rem 1rem;
+            color: var(--text-secondary);
+            border-radius: 12px;
+            text-decoration: none;
+            font-weight: 600;
+            font-size: 0.95rem;
+            cursor: pointer;
+            transition: all 0.25s ease;
+        }
+
+        .nav-item:hover, .nav-item.active {
+            color: var(--text-primary);
+            background-color: var(--hover-row);
+        }
+
+        .nav-item.active {
+            background: var(--accent-glow);
+            color: var(--accent-primary);
+            border: 1px solid rgba(99, 102, 241, 0.15);
+        }
+
+        .nav-item-icon {
+            font-size: 1.1rem;
+        }
+
+        .sidebar-footer {
+            border-top: 1px solid var(--header-border);
+            padding-top: 1.5rem;
+            display: flex;
+            flex-direction: column;
+            gap: 1rem;
+        }
+
+        /* Theme Toggle Design */
+        .theme-toggle-bar {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .theme-toggle-label {
+            font-size: 0.85rem;
+            color: var(--text-secondary);
+            font-weight: 600;
+        }
+
+        .switch {
+            position: relative;
+            display: inline-block;
+            width: 48px;
+            height: 24px;
+        }
+
+        .switch input {
+            opacity: 0;
+            width: 0;
+            height: 0;
+        }
+
+        .slider {
+            position: absolute;
+            cursor: pointer;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-color: var(--search-bg);
+            border: 1px solid var(--input-border);
+            transition: .4s;
+            border-radius: 34px;
+        }
+
+        .slider:before {
+            position: absolute;
+            content: "";
+            height: 16px;
+            width: 16px;
+            left: 3px;
+            bottom: 3px;
+            background-color: var(--text-primary);
+            transition: .4s;
+            border-radius: 50%;
+        }
+
+        input:checked + .slider {
+            background-color: var(--accent-primary);
+        }
+
+        input:checked + .slider:before {
+            transform: translateX(24px);
+        }
+
+        /* Main Workspace Content Area */
+        .main-content {
+            margin-left: 260px;
+            flex-grow: 1;
+            display: flex;
+            flex-direction: column;
+            min-height: 100vh;
+            padding: 2rem 3rem;
+            gap: 2rem;
+            width: calc(100% - 260px);
+        }
+
+        /* Top Header Styling */
+        .top-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding-bottom: 1.5rem;
+            border-bottom: 1px solid var(--header-border);
+        }
+
+        .page-info h2 {
+            font-size: 1.6rem;
+            font-weight: 800;
+            letter-spacing: -0.5px;
+        }
+
+        .page-info p {
+            color: var(--text-secondary);
+            font-size: 0.85rem;
+            margin-top: 0.2rem;
+        }
+
+        .header-actions {
+            display: flex;
+            align-items: center;
+            gap: 1.5rem;
+        }
+
+        /* Search Bar styling */
+        .search-box {
+            position: relative;
+            width: 320px;
+        }
+
+        .search-box input {
+            width: 100%;
+            background-color: var(--search-bg);
+            border: 1px solid var(--input-border);
+            color: var(--text-primary);
+            padding: 0.6rem 1rem 0.6rem 2.5rem;
+            border-radius: 10px;
+            outline: none;
+            font-size: 0.9rem;
+            font-weight: 500;
+            box-shadow: var(--shadow);
+        }
+
+        .search-box input:focus {
+            border-color: var(--accent-primary);
+            box-shadow: 0 0 0 3px var(--accent-glow);
+        }
+
+        .search-box::before {
+            content: "🔍";
+            position: absolute;
+            left: 0.85rem;
+            top: 50%;
+            transform: translateY(-50%);
+            font-size: 0.9rem;
+            opacity: 0.6;
+        }
+
+        /* Summary Cards Grid */
+        .summary-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+            gap: 1.5rem;
+        }
+
+        .summary-card {
+            background-color: var(--card-bg);
+            border: 1px solid var(--card-border);
+            border-radius: 16px;
+            padding: 1.5rem;
+            box-shadow: var(--shadow);
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .summary-card::before {
+            content: "";
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 4px;
+            height: 100%;
+            background: var(--accent-primary);
+        }
+
+        .summary-card.success::before { background: var(--success); }
+        .summary-card.warning::before { background: var(--warning); }
+        .summary-card.danger::before { background: var(--danger); }
+
+        .summary-label {
+            color: var(--text-secondary);
+            font-size: 0.85rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .summary-value {
+            font-size: 1.8rem;
+            font-weight: 800;
+            letter-spacing: -0.5px;
+        }
+
+        .summary-subtext {
+            font-size: 0.8rem;
+            color: var(--text-secondary);
+        }
+
+        /* Layout Panels */
+        .dashboard-section {
+            display: none;
+            flex-direction: column;
+            gap: 2rem;
+            animation: fadeIn 0.3s ease-in-out;
+        }
+
+        .dashboard-section.active {
+            display: flex;
+        }
+
+        .panel {
+            background-color: var(--card-bg);
+            border: 1px solid var(--card-border);
+            border-radius: 16px;
+            padding: 1.5rem;
+            box-shadow: var(--shadow);
+        }
+
+        .panel-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1.5rem;
+            border-bottom: 1px solid var(--header-border);
+            padding-bottom: 1rem;
+        }
+
+        .panel-title {
+            font-size: 1.15rem;
+            font-weight: 700;
+            letter-spacing: -0.2px;
+        }
+
+        /* Products Table and Layout Styling */
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            text-align: left;
+        }
+
+        th {
+            color: var(--text-secondary);
+            font-weight: 600;
+            font-size: 0.8rem;
+            text-transform: uppercase;
+            padding: 1rem;
+            border-bottom: 1px solid var(--card-border);
+            letter-spacing: 0.5px;
+        }
+
+        td {
+            padding: 1.1rem 1rem;
+            border-bottom: 1px solid var(--card-border);
+            font-size: 0.95rem;
+        }
+
+        tr:last-child td {
+            border-bottom: none;
+        }
+
+        tr:hover td {
+            background-color: var(--hover-row);
+        }
+
+        /* Stock progress indicators */
+        .stock-progress-container {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            width: 160px;
+        }
+
+        .stock-bar {
+            flex-grow: 1;
+            height: 6px;
+            background-color: var(--search-bg);
+            border-radius: 3px;
+            overflow: hidden;
+        }
+
+        .stock-fill {
+            height: 100%;
+            border-radius: 3px;
+            transition: width 0.5s ease-in-out;
+        }
+
+        .stock-tag {
+            font-size: 0.75rem;
+            font-weight: 700;
+            padding: 0.2rem 0.5rem;
+            border-radius: 6px;
+        }
+
+        .stock-tag.high {
+            background-color: rgba(16, 185, 129, 0.1);
+            color: var(--success);
+        }
+
+        .stock-tag.medium {
+            background-color: rgba(245, 158, 11, 0.1);
+            color: var(--warning);
+        }
+
+        .stock-tag.low {
+            background-color: rgba(239, 68, 68, 0.1);
+            color: var(--danger);
+        }
+
+        /* Select controls */
+        select {
+            background-color: var(--search-bg);
+            border: 1px solid var(--input-border);
+            color: var(--text-primary);
+            padding: 0.5rem 1rem;
+            border-radius: 10px;
+            outline: none;
+            cursor: pointer;
+            font-size: 0.9rem;
+            font-weight: 600;
+        }
+
+        select:focus {
+            border-color: var(--accent-primary);
+        }
+
+        /* Chart Canvas wrapper */
+        .chart-wrapper {
+            position: relative;
+            height: 380px;
+            width: 100%;
+        }
+
+        /* Alerts List view */
+        .alerts-container {
+            display: flex;
+            flex-direction: column;
+            gap: 1rem;
+        }
+
+        .alert-card {
+            background-color: var(--card-bg);
+            border: 1px solid var(--card-border);
+            border-left: 4px solid var(--accent-primary);
+            border-radius: 12px;
+            padding: 1.25rem 1.5rem;
+            box-shadow: var(--shadow);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            transition: transform 0.25s ease;
+        }
+
+        .alert-card:hover {
+            transform: translateX(4px);
+        }
+
+        .alert-card.low-stock { border-left-color: var(--danger); }
+        .alert-card.reorder { border-left-color: var(--warning); }
+        .alert-card.info { border-left-color: var(--accent-primary); }
+
+        .alert-content {
+            display: flex;
+            flex-direction: column;
+            gap: 0.35rem;
+        }
+
+        .alert-title {
+            font-weight: 700;
+            font-size: 1rem;
+            color: var(--text-primary);
+        }
+
+        .alert-description {
+            color: var(--text-secondary);
+            font-size: 0.88rem;
+            line-height: 1.4;
+        }
+
+        .alert-meta {
+            font-size: 0.75rem;
+            color: var(--text-secondary);
+            font-weight: 600;
+            background-color: var(--search-bg);
+            padding: 0.25rem 0.6rem;
+            border-radius: 6px;
+        }
+
+        .alert-badge {
+            font-size: 0.75rem;
+            font-weight: 700;
+            padding: 0.25rem 0.6rem;
+            border-radius: 6px;
+            text-transform: uppercase;
+        }
+
+        .alert-badge.danger-bg {
+            background-color: rgba(239, 68, 68, 0.1);
+            color: var(--danger);
+        }
+
+        .alert-badge.warning-bg {
+            background-color: rgba(245, 158, 11, 0.1);
+            color: var(--warning);
+        }
+
+        /* Empty list indicator styling */
+        .empty-state {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 4rem 2rem;
+            color: var(--text-secondary);
+            text-align: center;
+            gap: 1rem;
+        }
+
+        .empty-icon {
+            font-size: 3rem;
+            opacity: 0.4;
+        }
+
+        /* Animations */
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        /* Custom Scrollbars */
+        ::-webkit-scrollbar {
+            width: 8px;
+            height: 8px;
+        }
+
+        ::-webkit-scrollbar-track {
+            background: var(--bg-primary);
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: var(--card-border);
+            border-radius: 4px;
+        }
+
+        ::-webkit-scrollbar-thumb:hover {
+            background: var(--text-secondary);
+        }
+    </style>
+</head>
+<body>
+
+    <!-- Server variables JSON data script tags -->
+    <script id="products-data" type="application/json">
+        {{ products | tojson }}
+    </script>
+    <script id="forecasts-data" type="application/json">
+        {{ forecasts | tojson }}
+    </script>
+
+    <!-- Global Transfer Logic -->
+    <script>
+        window.products = JSON.parse(document.getElementById('products-data').textContent);
+        window.forecasts = JSON.parse(document.getElementById('forecasts-data').textContent);
+    </script>
+
+    <!-- Left Sidebar Navigation -->
+    <aside class="sidebar">
+        <div>
+            <div class="logo-section">
+                <div class="logo-icon">📊</div>
+                <div class="logo-text">SmartForecast</div>
+            </div>
+            
+            <nav class="nav-menu">
+                <div class="nav-item active" onclick="switchPage('products', this)">
+                    <span class="nav-item-icon">📦</span>
+                    <span>Products</span>
+                </div>
+                <div class="nav-item" onclick="switchPage('forecast', this)">
+                    <span class="nav-item-icon">📈</span>
+                    <span>Forecast</span>
+                </div>
+                <div class="nav-item" onclick="switchPage('alerts', this)">
+                    <span class="nav-item-icon">🔔</span>
+                    <span>Alerts</span>
+                    <span id="alertsBadgeCount" style="margin-left: auto; background-color: var(--danger); color: white; padding: 0.1rem 0.4rem; border-radius: 6px; font-size: 0.75rem; font-weight: 700; display: none;">0</span>
+                </div>
+                <a href="/logout" class="nav-item" style="text-decoration: none; margin-top: auto;">
+                    <span class="nav-item-icon">🚪</span>
+                    <span>Logout</span>
+                </a>
+            </nav>
+        </div>
+
+        <div class="sidebar-footer">
+            <div class="theme-toggle-bar">
+                <span class="theme-toggle-label">Light Theme</span>
+                <label class="switch">
+                    <input type="checkbox" id="themeSwitch" onchange="toggleTheme()">
+                    <span class="slider"></span>
+                </label>
+            </div>
+        </div>
+    </aside>
+
+    <!-- Main Content Panel Wrapper -->
+    <main class="main-content">
+        <!-- Header action bar -->
+        <header class="top-header">
+            <div class="page-info">
+                <h2 id="currentPageTitle">Products Catalog</h2>
+                <p id="currentPageSubtitle">Manage inventory items and current stock values.</p>
+            </div>
+            <div class="header-actions">
+                <div class="search-box">
+                    <input type="text" id="dashboardSearch" placeholder="Search catalog..." oninput="handleSearch()">
+                </div>
+            </div>
+        </header>
+
+        <!-- Dynamic summary statistics grid -->
+        <section class="summary-grid" id="summaryGrid">
+            <!-- Dynamic cards generated depending on tab context -->
+        </section>
+
+        <!-- SECTION 1: PRODUCTS PAGE -->
+        <section id="productsSection" class="dashboard-section active">
+            <div class="panel">
+                <div class="panel-header">
+                    <h3 class="panel-title">All Catalog Products</h3>
+                    <select id="categoryFilter" onchange="filterProducts()">
+                        <option value="ALL">All Categories</option>
+                    </select>
+                </div>
+                <div style="overflow-x: auto;">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th style="width: 80px;">ID</th>
+                                <th>Name</th>
+                                <th>Category</th>
+                                <th>Unit Price</th>
+                                <th>Current Stock</th>
+                                <th>Status</th>
+                            </tr>
+                        </thead>
+                        <tbody id="productsTableBody">
+                            <!-- Table rows populated dynamically -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </section>
+
+        <!-- SECTION 2: FORECAST PAGE -->
+        <section id="forecastSection" class="dashboard-section">
+            <div class="grid" style="display: grid; grid-template-columns: 1fr; gap: 2rem;">
+                <div class="panel">
+                    <div class="panel-header">
+                        <h3 class="panel-title">AI Demand Projections</h3>
+                        <select id="forecastProductSelect" onchange="renderForecastChart()">
+                            <!-- Populated dynamically -->
+                        </select>
+                    </div>
+                    <div class="chart-wrapper">
+                        <canvas id="forecastChart"></canvas>
+                    </div>
+                </div>
+
+                <div class="panel">
+                    <div class="panel-header">
+                        <h3 class="panel-title">Forecast Data Breakdown (Next 7 Days)</h3>
+                    </div>
+                    <div style="overflow-x: auto;">
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>Date</th>
+                                    <th>Weekday</th>
+                                    <th style="text-align: right;">Predicted Demand (Units)</th>
+                                </tr>
+                            </thead>
+                            <tbody id="forecastTableBody">
+                                <!-- Table rows populated dynamically -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- SECTION 3: ALERTS PAGE -->
+        <section id="alertsSection" class="dashboard-section">
+            <div class="panel" style="background: transparent; border: none; box-shadow: none; padding: 0;">
+                <div class="alerts-container" id="alertsContainer">
+                    <!-- Alert cards populated dynamically -->
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <script>
+        let currentTab = 'products';
+        let chartInstance = null;
+        let generatedAlerts = [];
+
+        // App Bootstrapper
+        document.addEventListener('DOMContentLoaded', () => {
+            initializeCategories();
+            initializeForecastProducts();
+            generateInventoryAlerts();
+            renderDashboard();
+        });
+
+        // Toggle Dark/Light Mode Theme
+        function toggleTheme() {
+            const themeSwitch = document.getElementById('themeSwitch');
+            if (themeSwitch.checked) {
+                document.documentElement.classList.add('light-theme');
+            } else {
+                document.documentElement.classList.remove('light-theme');
+            }
+            
+            // Re-render components that are theme-sensitive
+            renderSummaryCards();
+            if (currentTab === 'forecast') {
+                renderForecastChart();
+            }
+        }
+
+        // Switch Navigation Tabs
+        function switchPage(pageId, navItem) {
+            currentTab = pageId;
+            
+            // Update Navigation Menu indicators
+            document.querySelectorAll('.nav-item').forEach(item => item.classList.remove('active'));
+            navItem.classList.add('active');
+
+            // Toggle Page Display
+            document.querySelectorAll('.dashboard-section').forEach(sec => sec.classList.remove('active'));
+            document.getElementById(`${pageId}Section`).classList.add('active');
+
+            // Update Header Text & Search placeholders
+            const searchInput = document.getElementById('dashboardSearch');
+            searchInput.value = ''; // Reset search query on tab change
+            
+            if (pageId === 'products') {
+                document.getElementById('currentPageTitle').textContent = 'Products Catalog';
+                document.getElementById('currentPageSubtitle').textContent = 'Manage inventory items and current stock values.';
+                searchInput.placeholder = 'Search products...';
+            } else if (pageId === 'forecast') {
+                document.getElementById('currentPageTitle').textContent = 'Demand Forecasting';
+                document.getElementById('currentPageSubtitle').textContent = 'Predict future demand using trained machine learning models.';
+                searchInput.placeholder = 'Search forecast products...';
+            } else if (pageId === 'alerts') {
+                document.getElementById('currentPageTitle').textContent = 'System Alerts';
+                document.getElementById('currentPageSubtitle').textContent = 'Recommended purchase orders and stock shortage flags.';
+                searchInput.placeholder = 'Search alerts...';
+            }
+
+            renderDashboard();
+        }
+
+        // Main Rendering Orchestration
+        function renderDashboard() {
+            renderSummaryCards();
+            if (currentTab === 'products') {
+                renderProductsTable();
+            } else if (currentTab === 'forecast') {
+                renderForecastChart();
+            } else if (currentTab === 'alerts') {
+                renderAlertsPage();
+            }
+        }
+
+        // Populate Categories in Product Dropdown Filter
+        function initializeCategories() {
+            const catSelect = document.getElementById('categoryFilter');
+            const categories = [...new Set(window.products.map(p => p.category).filter(Boolean))];
+            
+            categories.forEach(cat => {
+                const opt = document.createElement('option');
+                opt.value = cat;
+                opt.textContent = cat;
+                catSelect.appendChild(opt);
+            });
+        }
+
+        // Populate Products list in Forecasting Dropdown select
+        function initializeForecastProducts() {
+            const select = document.getElementById('forecastProductSelect');
+            select.innerHTML = '';
+            
+            window.products.forEach(p => {
+                const opt = document.createElement('option');
+                opt.value = p.id;
+                opt.textContent = p.name;
+                select.appendChild(opt);
+            });
+        }
+
+        // Dynamic System Metrics and Summary Card Populator
+        function renderSummaryCards() {
+            const grid = document.getElementById('summaryGrid');
+            grid.innerHTML = '';
+
+            if (currentTab === 'products') {
+                const totalProducts = window.products.length;
+                const totalStock = window.products.reduce((acc, p) => acc + p.current_stock, 0);
+                const stockValue = window.products.reduce((acc, p) => acc + (p.current_stock * p.unit_price), 0);
+
+                grid.innerHTML = `
+                    <div class="summary-card">
+                        <span class="summary-label">Total Products</span>
+                        <span class="summary-value">${totalProducts}</span>
+                        <span class="summary-subtext">Active catalog items</span>
+                    </div>
+                    <div class="summary-card success">
+                        <span class="summary-label">Total Stock Quantity</span>
+                        <span class="summary-value">${totalStock.toLocaleString()}</span>
+                        <span class="summary-subtext">Units available on shelves</span>
+                    </div>
+                    <div class="summary-card success">
+                        <span class="summary-label">Inventory Assets Value</span>
+                        <span class="summary-value">₹${stockValue.toLocaleString('en-IN', {minimumFractionDigits: 2, maximumFractionDigits: 2})}</span>
+                        <span class="summary-subtext">Total valuation of products</span>
+                    </div>
+                `;
+            } else if (currentTab === 'forecast') {
+                const totalForecastedUnits = window.forecasts.reduce((acc, f) => acc + f.predicted_demand, 0);
+                const avgDailyDemand = window.forecasts.length > 0 ? (totalForecastedUnits / window.forecasts.length) : 0;
+                
+                // Find highest demand projection
+                let maxDemand = 0;
+                let maxProduct = "None";
+                window.forecasts.forEach(f => {
+                    if (f.predicted_demand > maxDemand) {
+                        maxDemand = f.predicted_demand;
+                        const p = window.products.find(prod => prod.id === f.product_id);
+                        maxProduct = p ? p.name : "Product #" + f.product_id;
+                    }
+                });
+
+                grid.innerHTML = `
+                    <div class="summary-card">
+                        <span class="summary-label">Projected Demand (7 Days)</span>
+                        <span class="summary-value">${totalForecastedUnits.toLocaleString()}</span>
+                        <span class="summary-subtext">Units expected to sell</span>
+                    </div>
+                    <div class="summary-card success">
+                        <span class="summary-label">Avg Daily Demand</span>
+                        <span class="summary-value">${avgDailyDemand.toFixed(1)}</span>
+                        <span class="summary-subtext">Predicted units sold per day</span>
+                    </div>
+                    <div class="summary-card warning">
+                        <span class="summary-label">Peak Weekly Demand</span>
+                        <span class="summary-value">${maxDemand}</span>
+                        <span class="summary-subtext">${maxProduct}</span>
+                    </div>
+                `;
+            } else if (currentTab === 'alerts') {
+                const lowStockCount = generatedAlerts.filter(a => a.type === 'low-stock').length;
+                const reorderCount = generatedAlerts.filter(a => a.type === 'reorder').length;
+
+                grid.innerHTML = `
+                    <div class="summary-card danger">
+                        <span class="summary-label">Stock Shortages</span>
+                        <span class="summary-value">${lowStockCount}</span>
+                        <span class="summary-subtext">Critical stock deficit items</span>
+                    </div>
+                    <div class="summary-card warning">
+                        <span class="summary-label">Purchase Orders Due</span>
+                        <span class="summary-value">${reorderCount}</span>
+                        <span class="summary-subtext">Recommended stock replenishments</span>
+                    </div>
+                    <div class="summary-card success">
+                        <span class="summary-label">System Health</span>
+                        <span class="summary-value">${lowStockCount === 0 ? 'Optimal' : 'Needs Action'}</span>
+                        <span class="summary-subtext">${lowStockCount === 0 ? 'No immediate stockouts predicted' : 'Action items flagged'}</span>
+                    </div>
+                `;
+            }
+        }
+
+        // Render products list inside table
+        function renderProductsTable(filterText = '') {
+            const tbody = document.getElementById('productsTableBody');
+            tbody.innerHTML = '';
+
+            const categoryFilter = document.getElementById('categoryFilter').value;
+
+            // Filter products dynamically
+            const filtered = window.products.filter(p => {
+                const matchesCategory = (categoryFilter === 'ALL' || p.category === categoryFilter);
+                const matchesSearch = p.name.toLowerCase().includes(filterText.toLowerCase()) || 
+                                      p.category.toLowerCase().includes(filterText.toLowerCase()) ||
+                                      p.id.toString() === filterText;
+                return matchesCategory && matchesSearch;
+            });
+
+            if (filtered.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="6" class="empty-state"><div class="empty-icon">📦</div>No products match your filters.</td></tr>';
+                return;
+            }
+
+            filtered.forEach(p => {
+                // Determine stock indicators
+                let fillClass = 'success';
+                let tagText = 'Healthy';
+                let fillPct = Math.min(100, (p.current_stock / 300) * 100); // 300 is max capacity scale
+
+                if (p.current_stock < 40) {
+                    fillClass = 'danger';
+                    tagText = 'Low Stock';
+                } else if (p.current_stock < 100) {
+                    fillClass = 'warning';
+                    tagText = 'Attention';
+                }
+
+                const tr = document.createElement('tr');
+                tr.innerHTML = `
+                    <td><span class="product-id-badge">#${p.id}</span></td>
+                    <td style="font-weight: 600; color: var(--text-primary);">${p.name}</td>
+                    <td style="color: var(--text-secondary); font-weight: 500;">${p.category}</td>
+                    <td style="font-weight: 600;">₹${p.unit_price.toLocaleString('en-IN', {minimumFractionDigits: 2, maximumFractionDigits: 2})}</td>
+                    <td>
+                        <div class="stock-progress-container">
+                            <span style="font-weight: 700; width: 35px;">${p.current_stock}</span>
+                            <div class="stock-bar">
+                                <div class="stock-fill" style="width: ${fillPct}%; background-color: var(--${fillClass});"></div>
+                            </div>
+                        </div>
+                    </td>
+                    <td><span class="stock-tag ${fillClass === 'success' ? 'high' : fillClass}">${tagText}</span></td>
+                `;
+                tbody.appendChild(tr);
+            });
+        }
+
+        // Filter Products by Category selector Change event
+        function filterProducts() {
+            const searchInput = document.getElementById('dashboardSearch').value;
+            renderProductsTable(searchInput);
+        }
+
+        // Render Forecasting Page components
+        function renderForecastChart() {
+            const select = document.getElementById('forecastProductSelect');
+            const selectedProductId = parseInt(select.value);
+
+            if (isNaN(selectedProductId)) return;
+
+            // Gather and sort prediction series
+            const prodForecasts = window.forecasts
+                .filter(f => f.product_id === selectedProductId)
+                .sort((a, b) => new Date(a.date) - new Date(b.date));
+
+            const dates = prodForecasts.map(f => {
+                const d = new Date(f.date);
+                return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+            });
+            const values = prodForecasts.map(f => f.predicted_demand);
+
+            // Populate forecasts side breakdown table
+            const tbody = document.getElementById('forecastTableBody');
+            tbody.innerHTML = '';
+
+            if (prodForecasts.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="3" class="empty-message">No demand forecasts generated for this product.</td></tr>';
+            } else {
+                prodForecasts.forEach(f => {
+                    const dateObj = new Date(f.date);
+                    const weekday = dateObj.toLocaleDateString('en-US', { weekday: 'long' });
+                    const tr = document.createElement('tr');
+                    tr.innerHTML = `
+                        <td style="font-weight: 600;">${f.date}</td>
+                        <td style="color: var(--text-secondary);">${weekday}</td>
+                        <td style="text-align: right; font-weight: 700; color: var(--accent-primary);">${f.predicted_demand} units</td>
+                    `;
+                    tbody.appendChild(tr);
+                });
+            }
+
+            // Draw line chart using Chart.js
+            const ctx = document.getElementById('forecastChart').getContext('2d');
+            
+            if (chartInstance) {
+                chartInstance.destroy();
+            }
+
+            // Select color based on theme
+            const isLightTheme = document.documentElement.classList.contains('light-theme');
+            const gridColor = isLightTheme ? '#e2e8f0' : 'rgba(255, 255, 255, 0.05)';
+            const labelColor = isLightTheme ? '#64748b' : '#94a3b8';
+            const accentColor = isLightTheme ? '#4f46e5' : '#6366f1';
+            const gradientFill = ctx.createLinearGradient(0, 0, 0, 350);
+            gradientFill.addColorStop(0, isLightTheme ? 'rgba(79, 70, 229, 0.18)' : 'rgba(99, 102, 241, 0.18)');
+            gradientFill.addColorStop(1, 'rgba(99, 102, 241, 0)');
+
+            chartInstance = new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: dates,
+                    datasets: [{
+                        label: 'Predicted Units Sold',
+                        data: values,
+                        borderColor: accentColor,
+                        backgroundColor: gradientFill,
+                        fill: true,
+                        tension: 0.4,
+                        borderWidth: 3,
+                        pointBackgroundColor: accentColor,
+                        pointBorderColor: isLightTheme ? '#fff' : '#0b0f19',
+                        pointBorderWidth: 2,
+                        pointRadius: 5,
+                        pointHoverRadius: 8
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: { display: false },
+                        tooltip: {
+                            backgroundColor: isLightTheme ? '#ffffff' : '#0b0f19',
+                            titleColor: isLightTheme ? '#0f172a' : '#fff',
+                            bodyColor: isLightTheme ? '#4f46e5' : '#818cf8',
+                            borderColor: isLightTheme ? '#cbd5e1' : 'rgba(255,255,255,0.08)',
+                            borderWidth: 1,
+                            padding: 12,
+                            displayColors: false,
+                            titleFont: { family: 'Plus Jakarta Sans', weight: 'bold' },
+                            bodyFont: { family: 'Plus Jakarta Sans', weight: 'bold' }
+                        }
+                    },
+                    scales: {
+                        y: {
+                            grid: { color: gridColor },
+                            ticks: {
+                                color: labelColor,
+                                font: { family: 'Plus Jakarta Sans', weight: '500' }
+                            },
+                            beginAtZero: true
+                        },
+                        x: {
+                            grid: { display: false },
+                            ticks: {
+                                color: labelColor,
+                                font: { family: 'Plus Jakarta Sans', weight: '500' }
+                            }
+                        }
+                    }
+                }
+            });
+        }
+
+        // Helper to format timestamps
+        function formatAlertTime(dateString) {
+            if (!dateString) return "Just now";
+            const date = new Date(dateString);
+            if (isNaN(date.getTime())) return dateString;
+            return date.toLocaleString('en-US', {
+                month: 'short',
+                day: 'numeric',
+                hour: '2-digit',
+                minute: '2-digit',
+                hour12: true
+            });
+        }
+
+        // Smart alerts engine
+        function generateInventoryAlerts() {
+            generatedAlerts = [];
+
+            window.products.forEach(p => {
+                const pid = p.id;
+                
+                // Get future forecasts
+                const pForecasts = window.forecasts.filter(f => f.product_id === pid);
+                const totalForecastedDemand = pForecasts.reduce((acc, f) => acc + f.predicted_demand, 0);
+                const latestForecast = pForecasts[0];
+                const alertTime = latestForecast && latestForecast.generated_at ? formatAlertTime(latestForecast.generated_at) : formatAlertTime(new Date());
+
+                // Scenario 1: Critical deficit (Stock is less than forecasted demand over next 7 days)
+                if (p.current_stock < totalForecastedDemand) {
+                    const deficit = totalForecastedDemand - p.current_stock;
+                    generatedAlerts.push({
+                        id: pid,
+                        productName: p.name,
+                        type: 'low-stock',
+                        title: `Out-Of-Stock Prediction: ${p.name}`,
+                        description: `Our forecasting models project a demand of <strong>${totalForecastedDemand} units</strong> over the next 7 days, but you only have <strong>${p.current_stock} units</strong> in stock. You are expected to run out with a deficit of <strong>${deficit} units</strong>.`,
+                        badgeText: 'Critical',
+                        meta: `Stock: ${p.current_stock} | Predicted Demand: ${totalForecastedDemand}`,
+                        time: alertTime
+                    });
+                }
+                
+                // Scenario 2: Safety buffer notification (Current stock is below safety limit of 50 units)
+                else if (p.current_stock < 50) {
+                    const recommendedRestock = 120 - p.current_stock;
+                    generatedAlerts.push({
+                        id: pid,
+                        productName: p.name,
+                        type: 'reorder',
+                        title: `Reorder Recommendation: ${p.name}`,
+                        description: `Stock is currently at <strong>${p.current_stock} units</strong>, dropping below the safety cushion (50 units). Recommend a replenishment order of <strong>${recommendedRestock} units</strong> to return to optimal stock levels.`,
+                        badgeText: 'Restock Due',
+                        meta: `Stock Level: ${p.current_stock} units`,
+                        time: alertTime
+                    });
+                }
+            });
+
+            // Update sidebar navigation alerts count badge
+            const badge = document.getElementById('alertsBadgeCount');
+            if (generatedAlerts.length > 0) {
+                badge.textContent = generatedAlerts.length;
+                badge.style.display = 'inline-block';
+            } else {
+                badge.style.display = 'none';
+            }
+        }
+
+        // Render Alerts List
+        function renderAlertsPage(filterText = '') {
+            const container = document.getElementById('alertsContainer');
+            container.innerHTML = '';
+
+            const filtered = generatedAlerts.filter(a => 
+                a.productName.toLowerCase().includes(filterText.toLowerCase()) ||
+                a.title.toLowerCase().includes(filterText.toLowerCase())
+            );
+
+            if (filtered.length === 0) {
+                container.innerHTML = `
+                    <div class="empty-state">
+                        <div class="empty-icon">✔️</div>
+                        <h3>No System Alerts</h3>
+                        <p style="color: var(--text-secondary); margin-top: 0.5rem;">Inventory is fully aligned with future demand projections.</p>
+                    </div>
+                `;
+                return;
+            }
+
+            filtered.forEach(alert => {
+                const card = document.createElement('div');
+                card.className = `alert-card ${alert.type}`;
+                card.innerHTML = `
+                    <div class="alert-content">
+                        <span class="alert-title">${alert.title}</span>
+                        <span class="alert-description">${alert.description}</span>
+                        <div style="display: flex; gap: 0.75rem; align-items: center; margin-top: 0.5rem;">
+                            <span class="alert-meta">${alert.meta}</span>
+                            <span class="alert-meta" style="opacity: 0.85; display: flex; align-items: center; gap: 0.25rem;">
+                                🕒 ${alert.time}
+                            </span>
+                        </div>
+                    </div>
+                    <span class="alert-badge ${alert.type === 'low-stock' ? 'danger-bg' : 'warning-bg'}">${alert.badgeText}</span>
+                `;
+                container.appendChild(card);
+            });
+        }
+
+        // Global Search input keypress dispatcher
+        function handleSearch() {
+            const filterText = document.getElementById('dashboardSearch').value;
+            if (currentTab === 'products') {
+                renderProductsTable(filterText);
+            } else if (currentTab === 'forecast') {
+                // If on forecasting tab, search term changes dropdown and plots chart
+                const match = window.products.find(p => p.name.toLowerCase().includes(filterText.toLowerCase()));
+                if (match) {
+                    const select = document.getElementById('forecastProductSelect');
+                    select.value = match.id;
+                    renderForecastChart();
+                }
+            } else if (currentTab === 'alerts') {
+                renderAlertsPage(filterText);
+            }
+        }
+    </script>
+</body>
+</html>
